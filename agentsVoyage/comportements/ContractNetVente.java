@@ -1,7 +1,9 @@
 package comportements;
 
+import agents.PortailAgence;
 import data.Journey;
 import gui.AgenceGui;
+import gui.PortailGui;
 import jade.core.Agent;
 import jade.domain.FIPAAgentManagement.FailureException;
 import jade.domain.FIPAAgentManagement.NotUnderstoodException;
@@ -32,6 +34,9 @@ public class ContractNetVente extends  ContractNetResponder
 	/** agent gui*/
 	private AgenceGui window;
 
+	/** portal gui*/
+	private PortailGui windowP;
+
 	/**
 	 * Initialisation du contract net
 	 * @param agent agent agence lie
@@ -44,6 +49,26 @@ public class ContractNetVente extends  ContractNetResponder
 		var monAgent = (AgenceAgent)agent;
 		window = monAgent.getWindow();
 		catalog = _catalog;
+	}
+
+	/*public ContractNetVente(Agent portail, MessageTemplate template, JourneysList _catalog)
+	{
+		super(portail, template);
+		var monAgent = (PortailAgence)portail;
+		windowP = monAgent.getWindow();
+		catalog = _catalog;
+	}*/
+
+	public void auction(Journey journey){
+		double currentPrice = journey.getCurrentPrice();
+		if (currentPrice>=1 && !journey.getSold()){
+			journey.setCurrentPrice(currentPrice-1);
+			JourneysList.sellTicket(journey);
+			auction(journey);
+		}
+		else {
+			window.println("Aucun acheteur trouvé aux enchères pour le ticket du voyage: " + journey);
+		}
 	}
 
 	/** methode lancee a la reception d'un appel d'offre

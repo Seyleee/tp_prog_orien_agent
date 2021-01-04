@@ -43,8 +43,19 @@ public class Journey implements Cloneable, Serializable, Comparable<Journey> {
     private static String COST = ", cost = ";
     private static String PROPOSEDBY = ", proposed by ";
 
+    /** for auction */
+	private double currentPrice;
+	/** true if journey in auction is sold*/
+	private boolean sold;
+
+	public double getCurrentPrice() { return currentPrice; }
+	public void setCurrentPrice(double startingPrice) { this.currentPrice = startingPrice; }
+
+	public boolean getSold(){return sold;}
+	public void setSold(boolean sold){this.sold = sold;}
+
 	public Journey(final String _start, final String _stop, final String _means, final int _departureDate,
-			final int _duration) {
+				   final int _duration) {
 		start = _start;
 		stop = _stop;
 		means = _means;
@@ -179,12 +190,25 @@ public class Journey implements Cloneable, Serializable, Comparable<Journey> {
 		this.arrivalDate = arrivalDate;
 	}
 
-	public String getProposedBy() {
-		return proposedBy;
-	}
+	public String getProposedBy() { return proposedBy; }
 
 	public void setProposedBy(final String proposedBy) {
+
 		this.proposedBy = proposedBy;
+		if (proposedBy.contains("Bus"))
+			places = 50;
+		else if (proposedBy.contains("Car"))
+			places = 3;
+		else if (proposedBy.contains("Train"))
+			places = 200;
+	}
+
+	public void decrementPlaces() {
+		places--;
+	}
+
+	public void incrementPlaces() {
+		places++;
 	}
 
 	@Override

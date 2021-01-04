@@ -17,6 +17,9 @@ public class JourneysList implements Serializable {
 	/** catalog of journeys from a departure (the key of the hashtable) */
 	private Map<String, ArrayList<Journey>> catalog;
 
+	/** catalog of blocked road*/
+	//private Map<String, ArrayList<Journey>> catalogsBlocked;
+
 	public JourneysList() {
 		catalog = new HashMap<>();
 	}
@@ -33,6 +36,17 @@ public class JourneysList implements Serializable {
 		var j = new Journey(_start.toUpperCase(), _stop.toUpperCase(), _means.toUpperCase(), _departureDate,
 				_duration);
 		catalog.compute(j.start, (s,l)->{if(l==null)l= new ArrayList<>();l.add(j);return l;});
+	}
+
+	/*public void addToBlockedCatalog(String _start, String _stop, String _means, int _departureDate, int _duration, double startingPrice){
+		var j = new Journey(_start.toUpperCase(), _stop.toUpperCase(), _means.toUpperCase(), _departureDate,
+				_duration, startingPrice);
+		catalogsBlocked.compute(j.start, (s,l)->{if(l==null)l= new ArrayList<>();l.add(j);return l;});
+	}*/
+
+	public static void sellTicket(Journey journey){
+		//sell ticket
+		double currentPrice = journey.getCurrentPrice();
 	}
 
 	/**
@@ -101,22 +115,26 @@ public class JourneysList implements Serializable {
 		var list = catalog.get(start.toUpperCase());
 		if (list == null) return false;
 		for (Journey j : list) {
-			if (j.departureDate >= date
-					&& j.departureDate <= Journey.addTime(date, late))
-				if (j.stop.equalsIgnoreCase(stop)) {
-					currentJourney.add(j);
-					ComposedJourney compo = new ComposedJourney();
-					compo.addJourneys((ArrayList<Journey>) currentJourney.clone());
-					results.add(compo);
-					currentJourney.remove(currentJourney.size() - 1);
-				} else {
-					if (!via.contains(j.stop.toUpperCase())) {
+			if (j.getPlaces() > 0) {
+				if (j.departureDate >= date
+						&& j.departureDate <= Journey.addTime(date, late))
+					if (j.stop.equalsIgnoreCase(stop)) {
 						currentJourney.add(j);
-						findIndirectJourney(j.stop.toUpperCase(), stop.toUpperCase(), j.arrivalDate, late, currentJourney, via, results);
-						via.remove(j.stop.toUpperCase());
-						currentJourney.remove(j);
+						ComposedJourney compo = new ComposedJourney();
+						compo.addJourneys((ArrayList<Journey>) currentJourney.clone());
+						results.add(compo);
+						currentJourney.remove(currentJourney.size() - 1);
+					} else {
+						if (!via.contains(j.stop.toUpperCase())) {
+							currentJourney.add(j);
+							findIndirectJourney(j.stop.toUpperCase(), stop.toUpperCase(), j.arrivalDate, late, currentJourney, via, results);
+							via.remove(j.stop.toUpperCase());
+							currentJourney.remove(j);
+						}
 					}
-				}
+			} else {
+				System.out.println("Plus de places pour ce trajet");
+			}
 		}
 		result = !results.isEmpty();
 		return result;
@@ -153,6 +171,35 @@ public class JourneysList implements Serializable {
 		list.forEach(j->sb.append(j).append("\n"));
 		sb.append("---end---");
 		return "list of journeys:\n" + sb.toString();
+	}
+
+	public void decrementJourneyPlaces(Journey journey) {
+		if (catalog.get(journey.start) != null)
+			for (Journey journey1 : catalog.get(journey.start)) {
+				if (journey1.getStop().equalsIgnoreCase(journey.stop) && journey1.getDepartureDate() == journey.departureDate && journey1.arrivalDate == journey.arrivalDate && journey.proposedBy.equalsIgnoreCase(journey1.proposedBy)) {
+					journey1.decrementPlaces();
+				}
+			}
+	}
+
+	public void incrementJourneyPlaces(Journey journey) {
+		if (catalog.get(journey.start) != null)
+			for (Journey journey1 : catalog.get(journey.start)) {
+				if (journey1.getStop().equalsIgnoreCase(journey.stop) && journey1.getDepartureDate() == journey.departureDate && journey1.arrivalDate == journey.arrivalDate && journey.proposedBy.equalsIgnoreCase(journey1.proposedBy)) {
+					journey1.incrementPlaces();
+				}
+			}
+	}
+
+	//Remove all Journey that begin from "start" and arrived to "stop"
+	public void removeDirectJourney(String start, String stop) {
+		if (catalog.get(start.toUpperCase()) != null) {
+			catalog.get(start.toUpperCase()).removeIf(journey -> journey.stop.equalsIgnoreCase(stop));
+			if (catalog.get(start.toUpperCase()).isEmpty()) {
+				catalog.remove(catalog.get(start.toUpperCase()));
+			}
+		}
+
 	}
 
 	public static void main(String[] args) {

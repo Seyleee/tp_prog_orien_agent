@@ -67,7 +67,6 @@ public class ContractNetAchat extends ContractNetInitiator {
         this.reset(msg);
     }
 
-
     /**
      * methode lancee a la reception de chaque refus
      *

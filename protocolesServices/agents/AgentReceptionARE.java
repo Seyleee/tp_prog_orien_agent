@@ -18,14 +18,14 @@ import java.util.Random;
  * @author eadam
  */
 @SuppressWarnings("serial")
-public class AgentReceptionARE extends AgentWindowed{
+public class AgentReceptionARE extends protocoles.agents.AgentWindowed {
 
     /**ajout du suivi de protocole AchieveRE*/
     protected void setup() {
         window = new SimpleWindow4Agent(getAID().getName(), this);
         window.println("Hello! Agent  " +  getLocalName() + " is ready, my address is " + this.getAID().getName());
 
-        AgentToolsEA.register(this,"calcul", "somme");
+        protocoles.agents.AgentToolsEA.register(this,"calcul", "somme");
         Random hasard = new Random();
 
 

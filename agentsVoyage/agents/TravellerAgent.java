@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 
 import comportements.ContractNetAchat;
 import data.ComposedJourney;
+import data.Journey;
 import data.JourneysList;
 import gui.TravellerGui;
 import jade.core.AID;
@@ -39,6 +40,7 @@ public class TravellerAgent extends GuiAgent {
 
 	/** catalog received by the sellers */
 	private JourneysList catalogs;
+
 
 	/** the journey chosen by the agent*/
 	private ComposedJourney myJourney;
@@ -146,7 +148,6 @@ public class TravellerAgent extends GuiAgent {
 				journeys.sort(Comparator.comparingDouble(ComposedJourney::getCost));
 				break;
 			case "duration-cost":
-				//TODO: replace below to make a compromise between cost and confort...
 				journeys.sort(Comparator.comparingDouble(ComposedJourney::getCost));
 				break;
 			default:
@@ -193,7 +194,6 @@ public class TravellerAgent extends GuiAgent {
 	public void setCatalogs(final JourneysList catalogs) {
 		this.catalogs = catalogs;
 	}
-
 
 	public ComposedJourney getMyJourney() {
 		return myJourney;

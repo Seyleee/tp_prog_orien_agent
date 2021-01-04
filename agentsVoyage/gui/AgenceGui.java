@@ -59,6 +59,7 @@ public class AgenceGui extends JFrame {
 		setResizable(true);
 	}
 
+
 	public void display() {
 		pack();
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();

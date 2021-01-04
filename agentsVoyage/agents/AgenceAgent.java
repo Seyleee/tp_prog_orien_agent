@@ -14,11 +14,14 @@ import jade.gui.GuiAgent;
 import jade.gui.GuiEvent;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import jade.lang.acl.UnreadableException;
 import launch.LaunchSimu;
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Journey Seller
@@ -45,43 +48,96 @@ public class AgenceAgent extends GuiAgent {
      */
     private AID topic;
 
+    public static final int SOLDES = 1;
+
+    private AID topicIncrementJourney;
+    public AID topicDecrementJourney;
+    public AID topicJourneySold;
+    public AID topicFinSoldes;
+    public AID topicSoldes;
+
     // Initialisation de l'agent
     @Override
     protected void setup() {
-        final Object[] args = getArguments(); // Recuperation des arguments
-        catalog = new JourneysList();
-        window = new gui.AgenceGui(this);
-        window.display();
+            final Object[] args = getArguments(); // Recuperation des arguments
+            catalog = new JourneysList();
+            window = new gui.AgenceGui(this);
+            window.display();
 
-        if (args != null && args.length > 0) {
-            fromCSV2Catalog((String) args[0]);
-        }
-
-        AgentToolsEA.register(this, "travel agency", "seller");
-
-        //REGLAGE ECOUTE DE LA RADIO
-        topic = AgentToolsEA.generateTopicAID(this, "TRAFFIC NEWS");
-        //ecoute des messages radio
-        addBehaviour(new CyclicBehaviour() {
-            @Override
-            public void action() {
-                var msg = myAgent.receive(MessageTemplate.MatchTopic(topic));
-                if (msg != null) {
-                    println("Message recu sur le topic " + topic.getLocalName() + ". Contenu " + msg.getContent()
-                            + " émis par " + msg.getSender().getLocalName());
-                } else {
-                    block();
-                }
+            if (args != null && args.length > 0) {
+                fromCSV2Catalog((String) args[0]);
             }
-        });
-        //FIN REGLAGE ECOUTE DE LA RADIO
 
+            topicSoldes = AgentToolsEA.generateTopicAID(this, "SOLDES");
+            topicFinSoldes = AgentToolsEA.generateTopicAID(this, "FIN DES SOLDES");
+            topicJourneySold = AgentToolsEA.generateTopicAID(this, "Vayage en soldes acheté");
 
-        // attendre une demande de catalogue & achat
-        var template = MessageTemplate.and(
-                MessageTemplate.MatchProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET),
-                MessageTemplate.MatchPerformative(ACLMessage.CFP));
-        addBehaviour(new ContractNetVente(this, template, catalog));
+            AgentToolsEA.register(this, "travel agency", "seller");
+
+            //REGLAGE ECOUTE DE LA RADIO
+            topic = AgentToolsEA.generateTopicAID(this, "TRAFFIC NEWS");
+            //ecoute des messages radio
+            addBehaviour(new CyclicBehaviour() {
+                @Override
+                public void action() {
+                    var msg = myAgent.receive(MessageTemplate.MatchTopic(topic));
+                    if (msg != null) {
+                        println("Message reçu sur le topic " + topic.getLocalName() + ". Contenu " + msg.getContent() + " émis par " + msg.getSender().getLocalName());
+
+                        Pattern patternStart = Pattern.compile("trajet (.*?) -");
+                        Matcher matcherStart = patternStart.matcher(msg.getContent());
+                        Pattern patternStop = Pattern.compile("-> (.*?) .");
+                        Matcher matcherStop = patternStop.matcher(msg.getContent());
+                        if (matcherStart.find() && matcherStop.find())
+                            catalog.removeDirectJourney(matcherStart.group(1), matcherStop.group(1));
+                    } else {
+                        block();
+                    }
+                }
+            });
+            //FIN REGLAGE ECOUTE DE LA RADIO
+
+            topicDecrementJourney = AgentToolsEA.generateTopicAID(this, "Decrement journey");
+            addBehaviour(new CyclicBehaviour() {
+                @Override
+                public void action() {
+                    var msg = myAgent.receive(MessageTemplate.MatchTopic(topicDecrementJourney));
+                    if (msg != null) {
+                        try {
+                            Journey journey = (Journey) msg.getContentObject();
+                            catalog.decrementJourneyPlaces(journey);
+                        } catch (UnreadableException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        block();
+                    }
+                }
+            });
+
+            topicIncrementJourney = AgentToolsEA.generateTopicAID(this, "Increment journey");
+            addBehaviour(new CyclicBehaviour() {
+                @Override
+                public void action() {
+                    var msg = myAgent.receive(MessageTemplate.MatchTopic(topicIncrementJourney));
+                    if (msg != null) {
+                        try {
+                            Journey journey = (Journey) msg.getContentObject();
+                            catalog.incrementJourneyPlaces(journey);
+                        } catch (UnreadableException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        block();
+                    }
+                }
+            });
+
+            // attendre une demande de catalogue & achat
+            var template = MessageTemplate.and(
+                    MessageTemplate.MatchProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET),
+                    MessageTemplate.MatchPerformative(ACLMessage.CFP));
+            addBehaviour(new ContractNetVente(this, template, catalog));
 
     }
 

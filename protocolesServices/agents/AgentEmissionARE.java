@@ -1,6 +1,5 @@
 package protocoles.agents;
 
-
 import protocoles.gui.SimpleWindow4Agent;
 import jade.core.AID;
 import jade.core.behaviours.WakerBehaviour;
@@ -13,7 +12,7 @@ import java.util.Arrays;
  * classe d'un agent qui soumet une requête de somme à un autre agent et gère l'échange par le protocole AchieveRE
  * @author eadam
  */
-public class AgentEmissionARE extends AgentWindowed{
+public class AgentEmissionARE extends protocoles.agents.AgentWindowed {
 
     /**ajout du suivi de protocole AchieveRE*/
     protected void setup() {
@@ -32,7 +31,7 @@ public class AgentEmissionARE extends AgentWindowed{
         msg.setConversationId(id);
         msg.setContent(computation);
 
-        var adresses = AgentToolsEA.searchAgents(this, "calcul", "somme");
+        var adresses = protocoles.agents.AgentToolsEA.searchAgents(this, "calcul", "somme");
         for (AID dest : adresses) msg.addReceiver(dest);
         System.out.println("---->>>>>" + Arrays.toString(adresses));
 
